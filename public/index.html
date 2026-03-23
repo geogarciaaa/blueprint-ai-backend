@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blueprint AI — Engineering Document Analyzer</title>
+  <meta name="description" content="Upload or paste engineering document text, provide a prompt, and get AI-powered analysis for issues, summaries, or insights." />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      color: #f0f0f0;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    .logo { font-size: 1.4rem; font-weight: 700; text-decoration: none; color: #fff; }
+    .logo span { color: #4ade80; }
+    nav a.back { color: #888; text-decoration: none; font-size: 0.9rem; }
+
+    .container {
+      flex: 1;
+      max-width: 900px;
+      margin: 50px auto;
+      padding: 0 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .badge { display: inline-block; background: #1a1a1a; border: 1px solid #2a2a2a; color: #4ade80; font-size: 0.8rem; padding: 6px 14px; border-radius: 20px; margin-bottom: 12px; }
+    h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -1px; line-height: 1.15; margin-bottom: 14px; }
+    h1 span { color: #4ade80; }
+    .subtitle { color: #777; font-size: 1rem; max-width: 600px; margin: 0 auto; }
+
+    .input-section {
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 16px;
+      padding: 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #ddd;
+    }
+
+    .field textarea {
+      width: 100%; height: 180px; background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 8px;
+      padding: 12px 16px; color: #f0f0f0; font-size: 0.95rem; outline: none; resize: vertical;
+      font-family: inherit;
+    }
+
+    .field input[type="text"] {
+      width: 100%; background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 8px;
+      padding: 10px 16px; color: #f0f0f0; font-size: 0.95rem; outline: none;
+      font-family: inherit;
+    }
+
+    .analyze-btn {
+      background: #4ade80; color: #000; border: none; border-radius: 9px;
+      padding: 14px 28px; font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: opacity 0.2s;
+      align-self: flex-start;
+    }
+    .analyze-btn:hover { opacity: 0.85; }
+    .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .output-section {
+      background: #111;
+      border: 1px solid #1e1e1e;
+      border-radius: 16px;
+      padding: 36px;
+      min-height: 200px;
+      display: none; /* Hidden until analysis is done */
+    }
+    .output-section.show { display: block; }
+
+    .output-section h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 16px; }
+    .output-content { white-space: pre-wrap; font-size: 0.95rem; color: #ccc; line-height: 1.8; }
+
+    .spinner { display: none; text-align: center; padding: 40px; }
+    .spinner.show { display: block; }
+    .loader { border: 4px solid #f3f3f3; border-top: 4px solid #4ade80; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      color: #333;
+      font-size: 0.8rem;
+      border-top: 1px solid #1a1a1a;
+      margin-top: auto; /* Push to bottom */
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 2rem; }
+      nav { padding: 16px 20px; }
+      .container { padding: 0 20px; margin: 30px auto; }
+      .input-section, .output-section { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="/" class="logo">Blueprint<span>AI</span></a>
+    <a href="/" class="back">← Back to Geo's Portfolio</a>
+  </nav>
+
+  <div class="container">
+    <div class="section-header">
+      <div class="badge">🧠 AI-Powered</div>
+      <h1>Analyze any Engineering <br>Document with <span>AI.</span></h1>
+      <p class="subtitle">Paste text from blueprints, specs, RFIs, or reports. Tell AI what to look for. Get instant insights.</p>
+    </div>
+
+    <div class="input-section">
+      <div class="field">
+        <label for="documentText">Paste Document Text Here</label>
+        <textarea id="documentText" placeholder="Paste text from your engineering document, spec sheet, RFI, or report. E.g., 'Structural beam S-201 requires fireproofing up to 2 hours in zone C.'" required></textarea>
+      </div>
+
+      <div class="field">
+        <label for="aiPrompt">What should AI analyze? (e.g., "Identify potential code violations", "Summarize key risks", "Find design discrepancies")</label>
+        <input type="text" id="aiPrompt" placeholder="e.g., Identify potential code violations" required />
+      </div>
+
+      <button class="analyze-btn" id="analyzeBtn" onclick="analyzeDocument()">Analyze Document with AI →</button>
+    </div>
+
+    <div class="spinner" id="spinner">
+      <div class="loader"></div>
+      <p>AI is analyzing your document...</p>
+    </div>
+
+    <div class="output-section" id="outputSection">
+      <h2>AI Analysis Report</h2>
+      <div class="output-content" id="analysisOutput"></div>
+    </div>
+  </div>
+
+  <footer>Built by Geo Garcia · Philadelphia, PA · 2026</footer>
+
+  <script>
+    async function analyzeDocument() {
+      const documentText = document.getElementById('documentText').value;
+      const aiPrompt = document.getElementById('aiPrompt').value;
+      const analyzeBtn = document.getElementById('analyzeBtn');
+      const spinner = document.getElementById('spinner');
+      const outputSection = document.getElementById('outputSection');
+      const analysisOutput = document.getElementById('analysisOutput');
+
+      if (!documentText || !aiPrompt) {
+        alert('Please paste some document text and provide an AI prompt.');
+        return;
+      }
+
+      analyzeBtn.disabled = true;
+      spinner.classList.add('show');
+      outputSection.classList.remove('show');
+      analysisOutput.textContent = '';
+
+      try {
+        // The backend server should be running on the same host but a different port (e.g., 4000)
+        // For local development or a proxy, this URL might need adjustment
+        const response = await fetch('http://localhost:4000/analyze', { // Adjust if using ngrok or different port
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ documentText, prompt: aiPrompt }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        analysisOutput.textContent = data.analysis;
+        outputSection.classList.add('show');
+
+      } catch (error) {
+        console.error('Error during AI analysis:', error);
+        analysisOutput.textContent = `Error: ${error.message}. Please ensure the backend server is running and your API key is configured.`;
+        outputSection.classList.add('show');
+      } finally {
+        analyzeBtn.disabled = false;
+        spinner.classList.remove('show');
+      }
+    }
+  </script>
+
+</body>
+</html>
